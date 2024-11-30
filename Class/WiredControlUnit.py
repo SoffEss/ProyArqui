@@ -6,6 +6,7 @@ class WiredControlUnit:
         # El diccionario control_signals almacena las señales de control y sus estados (True/False).
         self.control_signals = {}
 
+
     # Método generate_control_signals: Genera señales de control basadas en el opcode recibido.
     # Devuelve un diccionario con las señales de control y sus estados correspondientes.
     def generate_control_signals(self, opcode):
@@ -21,7 +22,7 @@ class WiredControlUnit:
             'alu_operation': None,
         }
 
-        if opcode in ['ADD', 'SUB', 'MUL', 'DIV', 'AND', 'OR', 'NOT', 'XOR']:
+        if opcode in ['ADD', 'SUB', 'MUL', 'DIV', 'AND', 'OR', 'NOT', 'XOR', 'CMP']:
             self.control_signals['execute'] = True
             self.control_signals['alu_operation'] = opcode
             self.control_signals['register_read'] = True

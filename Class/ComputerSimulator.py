@@ -7,6 +7,7 @@ from Class.Memory import Memory
 from Class.Register import Register
 from Class.RegisterBank import RegisterBank
 from Class.WiredControlUnit import WiredControlUnit
+from Class.InputOuput import InputOutput
 
 
 # Clase ComputerSimulator (Simulador de Computadora)
@@ -18,7 +19,7 @@ class ComputerSimulator:
         # Configura la ventana de la GUI y otros elementos visuales.
         self.root = root
         self.root.title("Proyecto Final Arquitectura")
-        self.root.configure(bg="#2A629A")
+        self.root.configure(bg="#2e2e2e")
 
         # Crea y organiza los elementos de la GUI.
         self.create_widgets()
@@ -30,6 +31,7 @@ class ComputerSimulator:
         self.control_unit = ControlUnit()
         self.register_bank = RegisterBank(self.canvas, 300, 45)
         self.wired_control_unit = WiredControlUnit()
+        self.input_output = InputOutput()
 
         # Inicializa los registros especiales de la computadora.
         self.pc_register = Register(self.canvas, 155, 50, "PC")
@@ -38,6 +40,7 @@ class ComputerSimulator:
         self.mbr_register = Register(self.canvas, 110, 200, "MBR")
         self.alu_text = Register(self.canvas, 105, 280, "ALU")
         self.psw_register = Register(self.canvas, 190, 380, "PSW")
+        self.input_output_register = Register(self.canvas, 105, 450, "I/O")
 
         # Inicializa otros elementos visuales y datos necesarios para la simulación.
         self.instructions = []
@@ -49,7 +52,7 @@ class ComputerSimulator:
     def create_widgets(self):
         # Crea elementos de la GUI como lienzo, widget de texto y botón de inicio.
         self.canvas = Canvas(self.root, width=1250, height=500,
-                             bg="#2A829A", highlightthickness=0)
+                             bg="#2E2E2E", highlightthickness=0)
         self.text_widget = Text(
             self.root, height=5, width=40, bg="#D8BFD8", fg="black", font=("Arial", 12))
         self.input_button = tk.Button(self.root, text="Comenzar", command=self.load_instructions,
@@ -58,6 +61,8 @@ class ComputerSimulator:
                                        bg="#FF69B4", fg="white", font=("Arial", 12, "bold"))
         self.step_button = tk.Button(self.root, text="Paso a paso", command=self.execute_single_instruction,
                                      bg="#FF69B4", fg="white", font=("Arial", 12, "bold"))
+        self.led_button = tk.Button(self.root, text="Encender Bombillo", command=lambda: self.execute_imput_output("buton1"),
+                                        bg="#FF69B4", fg="white", font=("Arial", 12, "bold"))
 
     def create_layout(self):
         # Organiza los elementos de la GUI en la ventana.
@@ -67,6 +72,7 @@ class ComputerSimulator:
 
         self.charge_button.pack(pady=5)
         self.step_button.pack(pady=5)
+        self.led_button.place(x=250, y=550)
 
         self.canvas.create_rectangle(170, 40, 250, 85, outline="white")
         self.canvas.create_rectangle(70, 40, 150, 85, outline="white")
@@ -74,6 +80,11 @@ class ComputerSimulator:
         self.canvas.create_rectangle(70, 185, 250, 245, outline="white")
         self.canvas.create_rectangle(70, 265, 250, 325, outline="white")
         self.canvas.create_rectangle(70, 370, 430, 430, outline="white")
+        self.canvas.create_rectangle(70, 440, 250, 500, outline="white")
+        ##led
+        self.led = self.canvas.create_rectangle(450, 440, 350, 500, outline="white", fill="black")
+        
+
 
         self.bus_direcciones = self.canvas.create_rectangle(
             450, 105, 600, 165, outline="white")
@@ -125,11 +136,12 @@ class ComputerSimulator:
 
     def highlight_bus(self, bus, color):
         # Resalta el bus especificado cambiando su color.
-        self.canvas.itemconfig(bus, outline=color)
+        self.canvas.itemconfig(bus, outline=color, fill=color)
 
     def reset_bus_color(self, bus):
         # Restablece el color del bus especificado.
-        self.canvas.itemconfig(bus, outline="white")
+        self.canvas.itemconfig(bus, outline="white", fill="#2E2E2E")
+
 
     def update_memory_display(self):
         memory_contents = "\n".join(
@@ -147,6 +159,7 @@ class ComputerSimulator:
         self.mbr_register.set_value(0)
         self.psw_register.set_value("Z: 0, C: 0, S: 0, O: 0 ")
         self.alu_text.set_value(0)
+        self.input_output_register.set_value(0)
 
         self.instructions = []
         self.register_bank.clear_registers()  # Limpia los registros
@@ -188,6 +201,7 @@ class ComputerSimulator:
     # Métodos para ejecutar el ciclo de búsqueda, decodificación y ejecución de instrucciones.
     def fetch_cycle(self):
         # Realiza la fase de búsqueda de la instrucción desde la memoria.
+        print("Fetching instruction...")
         pc_value = self.pc_register.value
         self.mar_register.set_value(pc_value)
 
@@ -205,6 +219,8 @@ class ComputerSimulator:
         self.mar_register.set_value(self.pc_register.value)
 
         opcode, reg1, reg2 = self.control_unit.decode()
+        print(f"Instruction fetched: {opcode} {reg1} {reg2}")
+        
         if reg1.isdigit():
             operand1 = int(reg1)
         else:
@@ -224,8 +240,7 @@ class ComputerSimulator:
         elif reg2 in self.register_bank.registers:
             operand2 = self.register_bank.get(reg2)
 
-        control_signals = self.wired_control_unit.generate_control_signals(
-            opcode)
+        control_signals = self.wired_control_unit.generate_control_signals(opcode)
         self.update_control_signals_display(control_signals)
 
         self.highlight_bus(self.bus_direcciones, "blue")
@@ -273,13 +288,42 @@ class ComputerSimulator:
 
         elif opcode == 'STORE':
             self.highlight_data_travel()
-            self.memory.store_data(operand2, operand1)
+            self.memory.store_data(operand2, operand1) 
 
         elif opcode == 'MOVE':
             self.register_bank.set(reg1, self.register_bank.get(reg2))
         self.root.update()
 
         self.update_control_signals_display(control_signals)
+
+## Metodo para la entrada y salida: se ejecuta bien solo que en la parte grafica el led
+## parece encenderse al instante. entonces no se puede apreciar bien. pero podriamos agregar
+## time sleep para que se pueda apreciar mejor.
+    
+    def execute_imput_output(self, value):
+        self.reset()
+        ## Recibe un valor de entrada 1
+        self.input_output_register.set_value(1)
+        value = self.input_output.read(value)
+        instructions = self.input_output.decode(value)
+        for idx, instruction in enumerate(instructions):
+            if instruction.strip():
+                if (len(self.instructions) >= self.memory.size // 2):
+                    print(
+                        "There is no space in memory to load more instructions.")
+                    break
+                self.memory.store_instruction(idx, instruction.strip())
+                self.instructions.append(instruction.strip())
+       
+        self.update_memory_display()
+        self.execute_all_instructions()
+        self.verify_instruction(value)
+    
+    def verify_instruction(self, value):
+        if self.register_bank.get("R1") == 0:
+            if value == "10":
+                self.onled()
+
 
     def reset_data_travel(self):
         self.root.after(500, self.reset_bus_color, self.bus_control)
@@ -310,3 +354,9 @@ class ComputerSimulator:
     def update_psw_display(self):
         psw_text = f"Z: {self.alu.psw['Z']} C: {self.alu.psw['C']} S: {self.alu.psw['S']} O: {self.alu.psw['O']}"
         self.psw_register.set_value(psw_text)
+
+## encender el led :
+    def onled(self):
+        self.canvas.itemconfig(self.led, fill="red")
+
+
