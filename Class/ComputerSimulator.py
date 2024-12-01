@@ -19,7 +19,7 @@ class ComputerSimulator:
         # Configura la ventana de la GUI y otros elementos visuales.
         self.root = root
         self.root.title("Proyecto Final Arquitectura")
-        self.root.configure(bg="#2e2e2e")
+        self.root.configure(bg="#4682B4")
 
         # Crea y organiza los elementos de la GUI.
         self.create_widgets()
@@ -51,18 +51,20 @@ class ComputerSimulator:
     # Métodos para crear y organizar los elementos de la GUI.
     def create_widgets(self):
         # Crea elementos de la GUI como lienzo, widget de texto y botón de inicio.
-        self.canvas = Canvas(self.root, width=1250, height=500,
-                             bg="#2E2E2E", highlightthickness=0)
+        self.canvas = Canvas(self.root, width=1250, height=515,
+                             bg="#4682B4", highlightthickness=0)
         self.text_widget = Text(
-            self.root, height=5, width=40, bg="#D8BFD8", fg="black", font=("Arial", 12))
+            self.root, height=5, width=40, bg="white", fg="black", font=("Arial", 12))
+        
+        button_width = 20
         self.input_button = tk.Button(self.root, text="Comenzar", command=self.load_instructions,
-                                      bg="#FF69B4", fg="white", font=("Arial", 12, "bold"))
+                                      bg="#00008B", fg="white", font=("Arial", 12, "bold"),width=button_width)
         self.charge_button = tk.Button(self.root, text="Cargar Instrucciones", command=self.load_single_instructions,
-                                       bg="#FF69B4", fg="white", font=("Arial", 12, "bold"))
+                                       bg="#00008B", fg="white", font=("Arial", 12, "bold"),width=button_width)
         self.step_button = tk.Button(self.root, text="Paso a paso", command=self.execute_single_instruction,
-                                     bg="#FF69B4", fg="white", font=("Arial", 12, "bold"))
+                                     bg="#00008B", fg="white", font=("Arial", 12, "bold"),width=button_width)
         self.led_button = tk.Button(self.root, text="Encender Bombillo", command=lambda: self.execute_imput_output("buton1"),
-                                        bg="#FF69B4", fg="white", font=("Arial", 12, "bold"))
+                                        bg="#00008B", fg="white", font=("Arial", 12, "bold"))
 
     def create_layout(self):
         # Organiza los elementos de la GUI en la ventana.
@@ -74,6 +76,10 @@ class ComputerSimulator:
         self.step_button.pack(pady=5)
         self.led_button.place(x=250, y=550)
 
+         # Registro de Control Unit con recuadro
+        self.canvas.create_rectangle(1040, 40, 1230, 300, outline="white")  # Rótulo
+        self.canvas.create_text(1135, 20, text="Unidad de control", fill="white", font=("Arial", 12, "bold"))
+
         self.canvas.create_rectangle(170, 40, 250, 85, outline="white")
         self.canvas.create_rectangle(70, 40, 150, 85, outline="white")
         self.canvas.create_rectangle(70, 105, 250, 165, outline="white")
@@ -81,11 +87,11 @@ class ComputerSimulator:
         self.canvas.create_rectangle(70, 265, 250, 325, outline="white")
         self.canvas.create_rectangle(70, 370, 430, 430, outline="white")
         self.canvas.create_rectangle(70, 440, 250, 500, outline="white")
-        ##led
+
+        # Led para la entrada y salida
         self.led = self.canvas.create_rectangle(450, 440, 350, 500, outline="white", fill="black")
         
-
-
+        # Buses del sistema 
         self.bus_direcciones = self.canvas.create_rectangle(
             450, 105, 600, 165, outline="white")
         self.canvas.create_text(
@@ -99,10 +105,12 @@ class ComputerSimulator:
         self.canvas.create_text(
             525, 295, text="Bus de Control", fill="white", font=("Arial", 12, "bold"))
 
+        # Banco de registros
         self.canvas.create_text(
             350, 60, text="Banco de registros", fill="white", font=("Arial", 12, "bold"))
         self.canvas.create_rectangle(270, 40, 430, 350, outline="white")
 
+        # Memoria principal
         self.canvas.create_text(
             810, 20, text="Memoria Principal", fill="white", font=("Arial", 12, "bold"))
         # Crear el rectángulo y la línea divisoria
@@ -116,7 +124,6 @@ class ComputerSimulator:
                                                    font=("Arial", 12, "bold"))
 
     # Método para mostrar las señales de control en la GUI.
-
     def create_control_signals_display(self):
         # Crea textos en el lienzo para mostrar las señales de control y sus estados.
         signals = ['fetch', 'decode', 'execute', 'memory_read', 'memory_write', 'register_read', 'register_write',
@@ -129,7 +136,7 @@ class ComputerSimulator:
 
     def update_control_signals_display(self, control_signals):
         for signal, value in control_signals.items():
-            color = "green" if value else "red"
+            color = "#006400" if value else "#8B0000"
             text = f"{signal}: {'On' if value else 'Off'}"
             self.canvas.itemconfig(
                 self.control_signals_text[signal], text=text, fill=color)
@@ -140,8 +147,7 @@ class ComputerSimulator:
 
     def reset_bus_color(self, bus):
         # Restablece el color del bus especificado.
-        self.canvas.itemconfig(bus, outline="white", fill="#2E2E2E")
-
+        self.canvas.itemconfig(bus, outline="white", fill="#4682B4")
 
     def update_memory_display(self):
         memory_contents = "\n".join(
