@@ -1,4 +1,5 @@
 import tkinter as tk
+import time
 from tkinter import Canvas, Text
 
 from Class.ALU import ALU
@@ -256,6 +257,8 @@ class ComputerSimulator:
         self.root.after(500, self.execute_cycle, opcode, reg1,
                         reg2, operand1, operand2, control_signals)
 
+        time.sleep(1)
+
     def execute_cycle(self, opcode, reg1, reg2, operand1, operand2, control_signals):
         # Realiza la fase de ejecución de la instrucción, actualizando registros y memoria según sea necesario.
         self.reset_data_travel()
@@ -302,6 +305,8 @@ class ComputerSimulator:
 
         self.update_control_signals_display(control_signals)
 
+        time.sleep(1)
+
 ## Metodo para la entrada y salida: se ejecuta bien solo que en la parte grafica el led
 ## parece encenderse al instante. entonces no se puede apreciar bien. pero podriamos agregar
 ## time sleep para que se pueda apreciar mejor.
@@ -343,6 +348,7 @@ class ComputerSimulator:
         # Ejecuta todas las instrucciones cargadas secuencialmente hasta que se complete la simulación.
         if self.pc_register.value < len(self.instructions):
             self.fetch_cycle()
+            time.sleep(1)
             self.root.after(2000, self.execute_all_instructions)
         else:
             print("Execution completed.")
