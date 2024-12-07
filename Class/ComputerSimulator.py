@@ -80,8 +80,9 @@ class ComputerSimulator:
          # Registro de Control Unit con recuadro
         self.canvas.create_rectangle(1040, 40, 1230, 300, outline="white")  # Rótulo
         self.canvas.create_text(1135, 20, text="Unidad de control", fill="white", font=("Arial", 12, "bold"))
+         # Pc Register con recuadro
+        self.pc = self.canvas.create_rectangle(170, 40, 250, 85, outline="white")
 
-        self.canvas.create_rectangle(170, 40, 250, 85, outline="white")
         self.canvas.create_rectangle(70, 40, 150, 85, outline="white")
         self.canvas.create_rectangle(70, 105, 250, 165, outline="white")
         self.canvas.create_rectangle(70, 185, 250, 245, outline="white")
@@ -210,6 +211,8 @@ class ComputerSimulator:
         # Realiza la fase de búsqueda de la instrucción desde la memoria.
         print("Fetching instruction...")
         pc_value = self.pc_register.value
+        self.highlight_bus(self.pc, "red")
+        self.root.after(3000, self.reset_bus_color, self.pc)
         self.mar_register.set_value(pc_value)
 
         mar_value = self.mar_register.value
@@ -237,7 +240,10 @@ class ComputerSimulator:
 
         if reg2.startswith('*'):
             address_register = reg2[1:]
-            if address_register in self.register_bank.registers:
+            if address_register.isdigit():
+                address = int(address_register)
+                operand2 = self.memory.load_data(address).value
+            elif address_register in self.register_bank.registers:
                 address = self.register_bank.get(address_register)
                 operand2 = self.memory.load_data(address).value
             else:
@@ -253,7 +259,6 @@ class ComputerSimulator:
         self.highlight_bus(self.bus_direcciones, "blue")
 
         self.root.after(500, self.reset_bus_color, self.bus_direcciones)
-
         self.root.after(500, self.execute_cycle, opcode, reg1,
                         reg2, operand1, operand2, control_signals)
 
@@ -276,11 +281,15 @@ class ComputerSimulator:
             self.pc_register.set_value(operand1)
         elif opcode == 'JPZ':
             if operand2 != 0:
-                self.pc_register.set_value(operand1)
+                self.pc_register.set_value(operand2)
 
         elif opcode == 'LOAD':
             if reg2.startswith('*'):
-                address = self.register_bank.get(reg2[1:])
+                if reg2[1:].isdigit():  # Caso LOAD R1, *16
+                    address = int(reg2[1:])  # Toma el valor después de '*' como dirección directa
+                    print(f"Loading data from address: {address}")
+                else:  
+                    address = self.register_bank.get(reg2[1:])  # Dirección almacenada en un registro
                 value = self.memory.load_data(address).value
                 self.highlight_data_travel()
                 self.mbr_register.set_value(value)
@@ -307,9 +316,7 @@ class ComputerSimulator:
 
         time.sleep(1)
 
-## Metodo para la entrada y salida: se ejecuta bien solo que en la parte grafica el led
-## parece encenderse al instante. entonces no se puede apreciar bien. pero podriamos agregar
-## time sleep para que se pueda apreciar mejor.
+## Metodo para la entrada y salida: 
     
     def execute_imput_output(self, value):
         self.reset()
@@ -329,11 +336,13 @@ class ComputerSimulator:
         self.update_memory_display()
         self.execute_all_instructions()
         self.verify_instruction(value)
-    
+
     def verify_instruction(self, value):
         if self.register_bank.get("R1") == 0:
+            print(self.register_bank.get("R1"))
             if value == "10":
-                self.onled()
+                self.root.after(500, self.onled)
+                
 
 
     def reset_data_travel(self):
@@ -367,8 +376,7 @@ class ComputerSimulator:
         psw_text = f"Z: {self.alu.psw['Z']} C: {self.alu.psw['C']} S: {self.alu.psw['S']} O: {self.alu.psw['O']}"
         self.psw_register.set_value(psw_text)
 
-## encender el led :
-    def onled(self):
+    ## encender el led :
+    def onled(self):   
         self.canvas.itemconfig(self.led, fill="red")
-
 
