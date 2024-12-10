@@ -273,14 +273,14 @@ class ComputerSimulator:
                 control_signals['alu_operation'], operand1, operand2)
             result = self.alu.value
 
-            if opcode in ['ADD', 'SUB', 'MUL', 'DIV', 'AND', 'OR', 'NOT', 'XOR']:
+            if opcode in ['ADD', 'SUB', 'MUL', 'DIV', 'AND', 'OR', 'NOT', 'XOR', 'CMP']:
                 self.alu_text.set_value(
                     f"{operand1} {opcode} {operand2 if operand2 is not None else ''} = {self.alu.value}")
                 self.register_bank.set(reg1, result)
         elif opcode == 'JP':
             self.pc_register.set_value(operand1)
         elif opcode == 'JPZ':
-            if operand2 != 0:
+            if operand1 == 0:
                 self.pc_register.set_value(operand2)
 
         elif opcode == 'LOAD':
@@ -309,9 +309,8 @@ class ComputerSimulator:
             self.memory.store_data(operand2, operand1) 
 
         elif opcode == 'MOVE':
-            self.register_bank.set(reg1, self.register_bank.get(reg2))
+            self.register_bank.set(reg1, self.register_bank.get(reg2))    
         self.root.update()
-
         self.update_control_signals_display(control_signals)
 
         time.sleep(1)

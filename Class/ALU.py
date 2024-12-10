@@ -54,7 +54,10 @@ class ALU:
             elif opcode == 'JP':
                 self.value = operand1
             elif opcode == 'JPZ':
-                self.value = operand1 if operand2 == 0 else None
+                self.value = operand1
+            elif opcode == 'CMP':
+                self.value = int(operand1 == operand2)
+                print(self.value)
 
         # Actualiza los flags del PSW
         self.psw['Z'] = int(self.value == 0)
