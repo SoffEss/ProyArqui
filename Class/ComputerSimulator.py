@@ -208,7 +208,6 @@ class ComputerSimulator:
 
     # Métodos para ejecutar el ciclo de búsqueda, decodificación y ejecución de instrucciones.
     def fetch_cycle(self):
-        # Realiza la fase de búsqueda de la instrucción desde la memoria.
         print("Fetching instruction...")
         pc_value = self.pc_register.value
         self.highlight_bus(self.pc, "red")
@@ -217,18 +216,23 @@ class ComputerSimulator:
 
         mar_value = self.mar_register.value
 
-        instruction = self.control_unit.fetch(
-            self.memory, mar_value)
+        # Obtiene la instrucción desde la memoria
+        instruction = self.control_unit.fetch(self.memory, mar_value)
 
         if not instruction:
             raise ValueError("No instruction found at PC address")
 
         self.mbr_register.set_value(instruction)
         self.ir_register.set_value(instruction)
-        self.pc_register.set_value(pc_value + 1)
+
+        # Incrementa el PC solo si no es un salto
+        opcode, reg1, reg2 = self.control_unit.decode()
+        if opcode not in ['JPZ', 'JP']:
+            self.pc_register.set_value(pc_value + 1)
+
         self.mar_register.set_value(self.pc_register.value)
 
-        opcode, reg1, reg2 = self.control_unit.decode()
+        # Decodifica la instrucción
         print(f"Instruction fetched: {opcode} {reg1} {reg2}")
         
         if reg1.isdigit():
@@ -264,6 +268,7 @@ class ComputerSimulator:
 
         time.sleep(1)
 
+
     def execute_cycle(self, opcode, reg1, reg2, operand1, operand2, control_signals):
         # Realiza la fase de ejecución de la instrucción, actualizando registros y memoria según sea necesario.
         self.reset_data_travel()
@@ -280,8 +285,11 @@ class ComputerSimulator:
         elif opcode == 'JP':
             self.pc_register.set_value(operand1)
         elif opcode == 'JPZ':
-            if operand2 != 0:
-                self.pc_register.set_value(operand2)
+            if operand1 == 0:  # Verifica si el valor de R3 (operand1) es 0
+                self.pc_register.set_value(operand2)  # Salta a la dirección indicada por operand2
+            else:
+                self.pc_register.set_value(self.pc_register.value + 1)  # Incrementa el PC normalmente
+            return 
 
         elif opcode == 'LOAD':
             if reg2.startswith('*'):
